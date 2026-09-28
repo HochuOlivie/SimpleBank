@@ -14,6 +14,7 @@ dependencies = [
     "drf-spectacular>=0.30.0",
     "gunicorn>=26.2.0",
     "psycopg[binary]>=3.3.6",
+    "whitenoise>=6.12.0",
 ]
 
 [dependency-groups]
@@ -59,3 +60,8 @@ django_settings_module = "config.settings"
 DJANGO_SETTINGS_MODULE = "config.settings"
 addopts = "-ra --strict-markers"
 python_files = ["test_*.py"]
+filterwarnings = [
+    "error",
+    # Tests do not run collectstatic, so WhiteNoise has no static directory to serve.
+    "ignore:No directory at:UserWarning",
+]
