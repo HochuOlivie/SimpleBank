@@ -84,14 +84,21 @@ def test_transfer_shows_up_in_both_histories_with_the_counterparty(
     assert (bob_history[0]["type"], bob_history[0]["amount"]) == ("credit", "100.00")
 
 
-def test_whole_balance_can_be_sent_when_it_covers_the_fee(
-    api_client: APIClient, bob_number: str
-) -> None:
-    response = api_client.post(URL, {"recipient_account": bob_number, "amount": "9756.09"})
+def test_balance_can_be_drained_to_exactly_zero(api_client: APIClient, bob_number: str) -> None:
+    # 9,756.10 + 243.90 fee = 10,000.00, the whole balance.
+    response = api_client.post(URL, {"recipient_account": bob_number, "amount": "9756.10"})
 
     assert response.status_code == 201
     assert response.json()["fee"] == "243.90"
-    assert _balance("ada@example.com") == Decimal("0.01")
+    assert _balance("ada@example.com") == Decimal("0.00")
+
+
+def test_one_cent_more_than_the_balance_is_refused(api_client: APIClient, bob_number: str) -> None:
+    # 9,756.11 + 243.90 fee = 10,000.01.
+    response = api_client.post(URL, {"recipient_account": bob_number, "amount": "9756.11"})
+
+    assert response.status_code == 409
+    assert _balance("ada@example.com") == Decimal("10000.00")
 
 
 def test_transfer_fails_without_side_effects_when_funds_do_not_cover_the_fee(
