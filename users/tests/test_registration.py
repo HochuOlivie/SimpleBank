@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Any
 
 import pytest
+from django.db import IntegrityError
 from rest_framework.test import APIClient
 
 from banking.models import Transaction, TransactionKind, TransactionType
@@ -62,6 +63,7 @@ def test_email_can_only_be_registered_once(api_client: APIClient, register: Regi
     ("payload", "field"),
     [
         ({"email": "not-an-email", "password": PASSWORD}, "email"),
+        ({"email": f"{'a' * 243}@example.com", "password": PASSWORD}, "email"),  # 255 chars
         ({"email": "ada@example.com", "password": "short"}, "password"),
         ({"email": "ada@example.com", "password": "password123"}, "password"),  # too common
         ({"email": "ada@example.com"}, "password"),
@@ -91,3 +93,32 @@ def test_failed_account_opening_rolls_back_the_user(
 
     assert response.status_code == 500
     assert not User.objects.exists()
+
+
+def test_email_registered_concurrently_after_validation_is_a_400(
+    api_client: APIClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def lose_the_race(email: str, password: str) -> User:
+        User.objects.create_user(email, password)  # the other request commits first
+        raise IntegrityError("duplicate key value violates unique constraint")
+
+    monkeypatch.setattr("users.serializers.register_user", lose_the_race)
+
+    response = api_client.post(URL, {"email": "ada@example.com", "password": PASSWORD})
+
+    assert response.status_code == 400
+    assert response.json() == {"email": ["A user with this email already exists."]}
+
+
+def test_other_integrity_errors_are_not_reported_as_a_taken_email(
+    api_client: APIClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def clash(email: str, password: str) -> User:
+        raise IntegrityError("duplicate key value violates unique constraint on number")
+
+    monkeypatch.setattr("users.serializers.register_user", clash)
+    api_client.raise_request_exception = False
+
+    response = api_client.post(URL, {"email": "ada@example.com", "password": PASSWORD})
+
+    assert response.status_code == 500

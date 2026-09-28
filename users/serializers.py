@@ -15,9 +15,6 @@ EMAIL_TAKEN = "A user with this email already exists."
 
 
 class RegistrationSerializer(serializers.ModelSerializer[User]):
-    email = serializers.EmailField(
-        validators=[UniqueValidator(User.objects.all(), message=EMAIL_TAKEN, lookup="iexact")]
-    )
     password = serializers.CharField(
         write_only=True, style={"input_type": "password"}, trim_whitespace=False
     )
@@ -26,6 +23,13 @@ class RegistrationSerializer(serializers.ModelSerializer[User]):
     class Meta:
         model = User
         fields = ("id", "email", "password", "account")
+        extra_kwargs = {  # noqa: RUF012
+            "email": {
+                "validators": [
+                    UniqueValidator(User.objects.all(), message=EMAIL_TAKEN, lookup="iexact")
+                ]
+            }
+        }
 
     def validate_email(self, email: str) -> str:
         return email.lower()
@@ -38,10 +42,14 @@ class RegistrationSerializer(serializers.ModelSerializer[User]):
         return attrs
 
     def create(self, validated_data: dict[str, Any]) -> User:
+        email = validated_data["email"]
         try:
-            return register_user(validated_data["email"], validated_data["password"])
-        except IntegrityError as exc:  # a concurrent request registered the same email
-            raise serializers.ValidationError({"email": [EMAIL_TAKEN]}) from exc
+            return register_user(email, validated_data["password"])
+        except IntegrityError as exc:
+            # A concurrent request may have registered the same email after validation.
+            if User.objects.filter(email=email).exists():
+                raise serializers.ValidationError({"email": [EMAIL_TAKEN]}) from exc
+            raise
 
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
