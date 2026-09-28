@@ -183,8 +183,8 @@ transfer fails midway, and real concurrent transfers against PostgreSQL, each on
 thread and connection: they cannot overdraw an account, deadlock, or transfer twice for one
 idempotency key. Further tests
 fail the build if a model change lacks a migration or the OpenAPI schema has warnings.
-GitHub Actions runs linting, type checks and tests against PostgreSQL 16, and builds the
-Docker image, on every push and pull request.
+GitHub Actions runs linting, type checks and tests against PostgreSQL 16 on every push and
+pull request, then starts the Docker Compose stack and registers a user through it.
 
 Configuration comes from environment variables (see `.env.example`): `DATABASE_URL`,
 `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS` and `DJANGO_LOG_LEVEL`. The
