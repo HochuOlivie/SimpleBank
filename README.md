@@ -1,5 +1,7 @@
 # SimpleBank
 
+[![CI](https://github.com/HochuOlivie/SimpleBank/actions/workflows/ci.yml/badge.svg)](https://github.com/HochuOlivie/SimpleBank/actions/workflows/ci.yml)
+
 A small REST API for bank accounts: register, log in, check your balance and history, and
 send money to other users. Built with Django, Django REST Framework and PostgreSQL.
 
@@ -169,22 +171,45 @@ Views stay thin: they validate input with serializers and call functions in
 
 ## Development
 
-With `DJANGO_DEBUG=true` exported as in the quick start:
+### Running the tests
+
+The suite needs a PostgreSQL database; the one from `docker compose up -d db` works with
+the default settings. From the project root:
 
 ```bash
-uv run pytest               # the test suite needs PostgreSQL (see DATABASE_URL)
-uv run ruff check .         # lint
-uv run ruff format .        # format
-uv run mypy .               # strict type checking with django-stubs
+uv run pytest                    # 88 tests, a few seconds
+uv run pytest banking/tests/test_transfer_service.py   # or any single file
 ```
 
-The tests cover the API end to end, the fee rule, the database constraints, rollback when a
-transfer fails midway, and real concurrent transfers against PostgreSQL, each on its own
-thread and connection: they cannot overdraw an account, deadlock, or transfer twice for one
-idempotency key. Further tests
-fail the build if a model change lacks a migration or the OpenAPI schema has warnings.
-GitHub Actions runs linting, type checks and tests against PostgreSQL 16 on every push and
-pull request, then starts the Docker Compose stack and registers a user through it.
+The tests live next to the code they cover:
+
+| Location | What it covers |
+| --- | --- |
+| `users/tests/` | Registration, login and tokens, the user model |
+| `banking/tests/` | Balance and history endpoints, date filters, transfers and fees, idempotent retries, `MoneyField` and the database constraints |
+| `banking/tests/test_transfer_service.py` | Rollback when a transfer fails midway, and real concurrent transfers against PostgreSQL, each on its own thread and connection: they cannot overdraw an account, deadlock, or transfer twice for one idempotency key |
+| `tests/` | Project-wide guards: no missing migrations, a valid and warning-free OpenAPI schema, no start without a secret key |
+
+Linting and type checks run the same way (with `DJANGO_DEBUG=true` exported as in the quick
+start, since they load the settings):
+
+```bash
+uv run ruff check .              # lint
+uv run ruff format --check .     # formatting
+uv run mypy .                    # strict type checking with django-stubs
+```
+
+### Continuous integration
+
+[GitHub Actions](https://github.com/HochuOlivie/SimpleBank/actions) runs on every push to
+`main` and every pull request, in two jobs:
+
+1. **Lint, type-check and test**: ruff, strict mypy, and the full test suite against a
+   PostgreSQL 16 service.
+2. **Docker Compose smoke test**: builds the image, starts the whole stack as
+   `docker compose up` would, and registers a user through the running API.
+
+### Configuration
 
 Configuration comes from environment variables (see `.env.example`): `DATABASE_URL`,
 `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS` and `DJANGO_LOG_LEVEL`. The
