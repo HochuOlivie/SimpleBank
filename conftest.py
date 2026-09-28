@@ -1,9 +1,16 @@
 from typing import Any
 
 import pytest
+from pytest_django.fixtures import Settings
 from rest_framework.test import APIClient
 
 PASSWORD = "correct horse battery staple"
+
+
+@pytest.fixture(autouse=True)
+def fast_password_hashing(settings: Settings) -> None:
+    """Argon2 is slow by design; tests that do not check hashing use a fast hasher."""
+    settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 
 @pytest.fixture

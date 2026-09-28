@@ -5,9 +5,11 @@ from typing import Any
 
 import pytest
 from django.db import IntegrityError
+from pytest_django.fixtures import Settings
 from rest_framework.test import APIClient
 
 from banking.models import Transaction, TransactionKind, TransactionType
+from config import settings as project_settings
 from conftest import PASSWORD
 from users.models import User
 
@@ -35,7 +37,8 @@ def test_registration_opens_an_account_with_the_welcome_bonus(api_client: APICli
     assert bonus.amount == bonus.balance_after == Decimal("10000.00")
 
 
-def test_password_is_stored_hashed(register: Register) -> None:
+def test_password_is_stored_hashed_with_argon2(register: Register, settings: Settings) -> None:
+    settings.PASSWORD_HASHERS = project_settings.PASSWORD_HASHERS
     register("ada@example.com")
 
     user = User.objects.get()
