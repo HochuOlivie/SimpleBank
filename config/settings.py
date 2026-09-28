@@ -4,6 +4,9 @@ import os
 from pathlib import Path
 
 import dj_database_url
+import django_stubs_ext
+
+django_stubs_ext.monkeypatch()  # lets generic Django classes be subscripted for type checking
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "users",
 ]
 
 MIDDLEWARE = [
@@ -66,6 +70,8 @@ DATABASES = {
     )
 }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = "users.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
