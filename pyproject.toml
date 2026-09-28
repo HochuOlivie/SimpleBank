@@ -34,6 +34,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "S", "DJ", "PT"]
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101", "S105", "S106"]
 "**/migrations/**" = ["E501", "RUF012"]
+"**/models.py" = ["RUF012"]  # Django's Meta options are plain class attributes
 
 [tool.mypy]
 strict = true
