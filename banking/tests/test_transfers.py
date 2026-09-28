@@ -170,3 +170,75 @@ def test_transfer_list_shows_sent_and_received_transfers_only(
     assert [t["amount"] for t in response.json()["results"]] == ["20.00", "10.00"]
     login("ada@example.com")
     assert [t["amount"] for t in api_client.get(URL).json()["results"]] == ["10.00"]
+
+
+def test_retry_with_the_same_idempotency_key_does_not_send_twice(
+    api_client: APIClient, bob_number: str
+) -> None:
+    payload = {"recipient_account": bob_number, "amount": "100.00"}
+    first = api_client.post(URL, payload, HTTP_IDEMPOTENCY_KEY="order-42")
+
+    retry = api_client.post(URL, payload, HTTP_IDEMPOTENCY_KEY="order-42")
+
+    assert (first.status_code, retry.status_code) == (201, 200)
+    assert retry.json() == first.json()
+    assert Transfer.objects.count() == 1
+    assert _balance("ada@example.com") == Decimal("9895.00")
+
+
+def test_different_idempotency_keys_are_different_transfers(
+    api_client: APIClient, bob_number: str
+) -> None:
+    payload = {"recipient_account": bob_number, "amount": "100.00"}
+
+    api_client.post(URL, payload, HTTP_IDEMPOTENCY_KEY="order-1")
+    api_client.post(URL, payload, HTTP_IDEMPOTENCY_KEY="order-2")
+    api_client.post(URL, payload)  # no key: always a new transfer
+    api_client.post(URL, payload)
+
+    assert Transfer.objects.count() == 4
+
+
+def test_idempotency_keys_are_scoped_to_the_sender(
+    api_client: APIClient, bob_number: str, register: Register, login: Login
+) -> None:
+    carol_number = register("carol@example.com")["account"]["number"]
+    first = api_client.post(
+        URL, {"recipient_account": bob_number, "amount": "10.00"}, HTTP_IDEMPOTENCY_KEY="k"
+    )
+    login("bob@example.com")
+
+    second = api_client.post(
+        URL, {"recipient_account": carol_number, "amount": "10.00"}, HTTP_IDEMPOTENCY_KEY="k"
+    )
+
+    assert (first.status_code, second.status_code) == (201, 201)
+
+
+def test_reusing_an_idempotency_key_for_another_transfer_is_rejected(
+    api_client: APIClient, bob_number: str
+) -> None:
+    api_client.post(
+        URL, {"recipient_account": bob_number, "amount": "10.00"}, HTTP_IDEMPOTENCY_KEY="k"
+    )
+
+    response = api_client.post(
+        URL, {"recipient_account": bob_number, "amount": "20.00"}, HTTP_IDEMPOTENCY_KEY="k"
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "idempotency_key_reused"
+    assert Transfer.objects.count() == 1
+
+
+@pytest.mark.parametrize("key", ["", "x" * 65, "has space", "ключ"])
+def test_malformed_idempotency_keys_are_rejected(
+    api_client: APIClient, bob_number: str, key: str
+) -> None:
+    response = api_client.post(
+        URL, {"recipient_account": bob_number, "amount": "10.00"}, HTTP_IDEMPOTENCY_KEY=key
+    )
+
+    assert response.status_code == 400
+    assert "Idempotency-Key" in response.json()
+    assert not Transfer.objects.exists()

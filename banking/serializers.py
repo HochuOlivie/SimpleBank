@@ -1,10 +1,8 @@
 from decimal import Decimal
-from typing import Any
 
 from rest_framework import serializers
 
 from banking.models import Account, Transaction, Transfer
-from banking.services import transfer_money
 
 
 class AccountSerializer(serializers.ModelSerializer[Account]):
@@ -79,10 +77,3 @@ class TransferSerializer(serializers.ModelSerializer[Transfer]):
             "created_at",
         )
         read_only_fields = ("id", "created_at")
-
-    def create(self, validated_data: dict[str, Any]) -> Transfer:
-        return transfer_money(
-            sender=validated_data["sender_account"],
-            recipient=validated_data["recipient_account"],
-            amount=validated_data["amount"],
-        )

@@ -111,3 +111,21 @@ def test_opposite_concurrent_transfers_neither_deadlock_nor_lose_money(
     assert ada.balance == bob.balance == Decimal("9960.00")
     assert _ledger_balance(ada) == ada.balance
     assert _ledger_balance(bob) == bob.balance
+
+
+@pytest.mark.django_db(transaction=True)
+def test_simultaneous_retries_with_one_idempotency_key_transfer_once(
+    accounts: tuple[Account, Account],
+) -> None:
+    ada, bob = accounts
+
+    results = _run_concurrently(
+        [
+            lambda: transfer_money(ada, bob, Decimal("100.00"), idempotency_key="order-42")
+            for _ in range(8)
+        ]
+    )
+
+    assert results == [None] * 8
+    assert Transfer.objects.count() == 1
+    assert _account("ada@example.com").balance == Decimal("9895.00")

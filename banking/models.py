@@ -47,10 +47,22 @@ class Transfer(models.Model):
     )
     amount = MoneyField()
     fee = MoneyField()
+    idempotency_key = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        editable=False,
+        help_text="Client-chosen key that makes retrying this transfer safe; empty if none.",
+    )
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         constraints = [
+            models.UniqueConstraint(
+                fields=("sender_account", "idempotency_key"),
+                condition=~Q(idempotency_key=""),
+                name="transfer_idempotency_key_unique_per_sender",
+            ),
             models.CheckConstraint(condition=Q(amount__gt=0), name="transfer_amount_positive"),
             models.CheckConstraint(condition=Q(fee__gte=0), name="transfer_fee_non_negative"),
             models.CheckConstraint(
