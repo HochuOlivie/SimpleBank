@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from banking.serializers import AccountSerializer
 from users.models import User
@@ -41,3 +42,12 @@ class RegistrationSerializer(serializers.ModelSerializer[User]):
             return register_user(validated_data["email"], validated_data["password"])
         except IntegrityError as exc:  # a concurrent request registered the same email
             raise serializers.ValidationError({"email": [EMAIL_TAKEN]}) from exc
+
+
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Log in with the email in any letter case, matching how it was registered."""
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, str]:
+        attrs[self.username_field] = attrs[self.username_field].lower()
+        data: dict[str, str] = super().validate(attrs)
+        return data
