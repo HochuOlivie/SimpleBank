@@ -17,7 +17,8 @@ docker compose up --build
 ```
 
 The API is at <http://localhost:8000/api/v1/>, with interactive docs at
-<http://localhost:8000/api/docs/>.
+<http://localhost:8000/api/docs/>. PostgreSQL is also published on `127.0.0.1:5432`; if that
+port is taken, start with `POSTGRES_PORT=5433 docker compose up --build`.
 
 Without Docker you need Python 3.12, [uv](https://docs.astral.sh/uv/) and PostgreSQL. The
 default settings match the database that `docker compose up db` starts:
@@ -35,31 +36,38 @@ To use other settings, copy `.env.example` to `.env`, edit it and pass it along 
 
 ## Walkthrough
 
+With the API running (and [jq](https://jqlang.org/) for picking values out of responses):
+
 ```bash
 API=http://localhost:8000/api/v1
+JSON='Content-Type: application/json'
 
 # Register two users; each gets an account with EUR 10,000.
-curl -s -X POST $API/auth/register/ -H 'Content-Type: application/json' \
+curl -s $API/auth/register/ -H "$JSON" \
   -d '{"email": "alice@example.com", "password": "correct horse battery staple"}'
-curl -s -X POST $API/auth/register/ -H 'Content-Type: application/json' \
-  -d '{"email": "bob@example.com", "password": "correct horse battery staple"}'
-# => {"id": 2, "email": "bob@example.com",
-#     "account": {"number": "2717223670", "balance": "10000.00", "currency": "EUR"}}
+# => {"id": 1, "email": "alice@example.com",
+#     "account": {"number": "1224895911", "balance": "10000.00", "currency": "EUR"}}
+BOB=$(curl -s $API/auth/register/ -H "$JSON" \
+  -d '{"email": "bob@example.com", "password": "correct horse battery staple"}' \
+  | jq -r .account.number)
 
 # Log in as Alice.
-TOKEN=$(curl -s -X POST $API/auth/token/ -H 'Content-Type: application/json' \
-  -d '{"email": "alice@example.com", "password": "correct horse battery staple"}' | jq -r .access)
+TOKEN=$(curl -s $API/auth/token/ -H "$JSON" \
+  -d '{"email": "alice@example.com", "password": "correct horse battery staple"}' \
+  | jq -r .access)
+AUTH="Authorization: Bearer $TOKEN"
 
-# Send Bob EUR 250. The fee is 6.25 (2.5%), so Alice pays 256.25.
-curl -s -X POST $API/transfers/ -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' -H 'Idempotency-Key: 5f1c9e0a' \
-  -d '{"recipient_account": "2717223670", "amount": "250.00"}'
+# Send Bob EUR 250. The fee is 6.25 (2.5%), so Alice pays 256.25. Repeating this
+# request with the same Idempotency-Key returns the same transfer instead of paying twice.
+curl -s $API/transfers/ -H "$AUTH" -H "$JSON" -H 'Idempotency-Key: 5f1c9e0a' \
+  -d "{\"recipient_account\": \"$BOB\", \"amount\": \"250.00\"}"
 # => {"id": 1, "sender_account": "1224895911", "recipient_account": "2717223670",
 #     "amount": "250.00", "fee": "6.25", "total": "256.25", "created_at": "..."}
 
-# Balance and today's transactions.
-curl -s $API/account/ -H "Authorization: Bearer $TOKEN"
-curl -s "$API/account/transactions/?from=2026-09-28&to=2026-09-28" -H "Authorization: Bearer $TOKEN"
+# Balance, and today's transactions.
+curl -s $API/account/ -H "$AUTH"
+TODAY=$(date -u +%F)
+curl -s "$API/account/transactions/?from=$TODAY&to=$TODAY" -H "$AUTH"
 ```
 
 ## Endpoints
@@ -161,6 +169,8 @@ Views stay thin: they validate input with serializers and call functions in
 
 ## Development
 
+With `DJANGO_DEBUG=true` exported as in the quick start:
+
 ```bash
 uv run pytest               # the test suite needs PostgreSQL (see DATABASE_URL)
 uv run ruff check .         # lint
@@ -169,16 +179,17 @@ uv run mypy .               # strict type checking with django-stubs
 ```
 
 The tests cover the API end to end, the fee rule, the database constraints, rollback when a
-transfer fails midway, and real concurrent transfers on PostgreSQL threads: they can neither
-overdraw an account, deadlock, nor transfer twice for one idempotency key. Further tests
+transfer fails midway, and real concurrent transfers against PostgreSQL, each on its own
+thread and connection: they cannot overdraw an account, deadlock, or transfer twice for one
+idempotency key. Further tests
 fail the build if a model change lacks a migration or the OpenAPI schema has warnings.
 GitHub Actions runs linting, type checks and tests against PostgreSQL 16, and builds the
 Docker image, on every push and pull request.
 
 Configuration comes from environment variables (see `.env.example`): `DATABASE_URL`,
-`DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS` and `DJANGO_LOG_LEVEL`. The secret key also signs
-the JWTs, so the app refuses to start without one unless `DJANGO_DEBUG` is on. The test
-suite sets its own.
+`DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS` and `DJANGO_LOG_LEVEL`. The
+secret key also signs the JWTs, so the app refuses to start without one unless
+`DJANGO_DEBUG` is on. The test suite sets its own.
 
 ## Assumptions
 
