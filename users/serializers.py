@@ -1,0 +1,43 @@
+from typing import Any
+
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
+from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
+
+from banking.serializers import AccountSerializer
+from users.models import User
+from users.services import register_user
+
+EMAIL_TAKEN = "A user with this email already exists."
+
+
+class RegistrationSerializer(serializers.ModelSerializer[User]):
+    email = serializers.EmailField(
+        validators=[UniqueValidator(User.objects.all(), message=EMAIL_TAKEN, lookup="iexact")]
+    )
+    password = serializers.CharField(
+        write_only=True, style={"input_type": "password"}, trim_whitespace=False
+    )
+    account = AccountSerializer(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ("id", "email", "password", "account")
+
+    def validate_email(self, email: str) -> str:
+        return email.lower()
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        try:
+            validate_password(attrs["password"], User(email=attrs["email"]))
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({"password": exc.messages}) from exc
+        return attrs
+
+    def create(self, validated_data: dict[str, Any]) -> User:
+        try:
+            return register_user(validated_data["email"], validated_data["password"])
+        except IntegrityError as exc:  # a concurrent request registered the same email
+            raise serializers.ValidationError({"email": [EMAIL_TAKEN]}) from exc

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "SimpleBank: a small REST API for bank accounts, transactions and transfers."
 requires-python = ">=3.12"
 dependencies = [
+    "argon2-cffi>=25.1.0",
     "dj-database-url>=3.1.2",
     "django>=6.1.1",
     "django-filter>=26.1",
@@ -33,6 +34,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "S", "DJ", "PT"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101", "S105", "S106"]
+"conftest.py" = ["S101", "S105"]
 "**/migrations/**" = ["E501", "RUF012"]
 "**/models.py" = ["RUF012"]  # Django's Meta options are plain class attributes
 
