@@ -54,6 +54,10 @@ ignore_missing_imports = true
 module = ["banking.filters"]
 disallow_subclassing_any = false  # django-filter ships no type hints
 
+[[tool.mypy.overrides]]
+module = ["users.schema", "tests.test_project"]
+disallow_untyped_calls = false  # drf-spectacular's extension and generator APIs are untyped
+
 [tool.django-stubs]
 django_settings_module = "config.settings"
 

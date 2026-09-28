@@ -253,3 +253,18 @@ def test_largest_allowed_transfer_is_serialised_with_its_fee(
 
     assert response.status_code == 201
     assert response.json()["total"] == "10249999999.99"
+
+
+def test_transfer_can_be_fetched_by_sender_and_recipient_only(
+    api_client: APIClient, bob_number: str, register: Register, login: Login
+) -> None:
+    created = api_client.post(URL, {"recipient_account": bob_number, "amount": "10.00"})
+    location = created["Location"]
+
+    assert location == f"{URL}{created.json()['id']}/"
+    assert api_client.get(location).json() == created.json()
+    login("bob@example.com")
+    assert api_client.get(location).status_code == 200
+    register("carol@example.com")
+    login("carol@example.com")
+    assert api_client.get(location).status_code == 404

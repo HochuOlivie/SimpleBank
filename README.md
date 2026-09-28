@@ -73,6 +73,7 @@ curl -s "$API/account/transactions/?from=2026-09-28&to=2026-09-28" -H "Authoriza
 | `GET` | `/api/v1/account/transactions/` | Your transactions, newest first; `from`, `to`, `limit`, `offset` |
 | `POST` | `/api/v1/transfers/` | Send money to another account by its number |
 | `GET` | `/api/v1/transfers/` | Transfers you sent or received |
+| `GET` | `/api/v1/transfers/{id}/` | One transfer you sent or received |
 
 All endpoints except registration and login require `Authorization: Bearer <access token>`.
 The full OpenAPI schema is served at `/api/schema/` and rendered at `/api/docs/`.

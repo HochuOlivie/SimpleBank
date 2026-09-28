@@ -4,6 +4,7 @@ from typing import Any
 import django_filters
 from django import forms
 from django.utils.dateparse import parse_date, parse_datetime
+from drf_spectacular.utils import extend_schema_field
 
 from banking.models import Transaction
 
@@ -38,6 +39,15 @@ class DateOrDateTimeField(forms.Field):
 
 class DateOrDateTimeFilter(django_filters.Filter):
     field_class = DateOrDateTimeField
+
+    def __init__(self, *, help_text: str, **kwargs: Any) -> None:
+        super().__init__(help_text=help_text, **kwargs)
+        # Document both accepted forms; the model field alone would say date-time only.
+        date_or_datetime = [
+            {"type": "string", "format": "date"},
+            {"type": "string", "format": "date-time"},
+        ]
+        extend_schema_field({"oneOf": date_or_datetime, "description": help_text})(self)
 
 
 class TransactionFilterForm(forms.Form):
