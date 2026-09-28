@@ -24,6 +24,7 @@ dev = [
     "mypy>=2.3.1",
     "pytest>=9.1.1",
     "pytest-django>=4.14.0",
+    "pytest-env>=1.7.1",
     "ruff>=0.16.9",
 ]
 
@@ -60,6 +61,7 @@ django_settings_module = "config.settings"
 DJANGO_SETTINGS_MODULE = "config.settings"
 addopts = "-ra --strict-markers"
 python_files = ["test_*.py"]
+env = ["DJANGO_SECRET_KEY=django-insecure-test-only-key-not-for-real-use"]
 filterwarnings = [
     "error",
     # Tests do not run collectstatic, so WhiteNoise has no static directory to serve.

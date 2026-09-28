@@ -25,8 +25,9 @@ default settings match the database that `docker compose up db` starts:
 ```bash
 docker compose up -d db
 uv sync
+export DJANGO_DEBUG=true        # development mode, with a built-in secret key
 uv run python manage.py migrate
-DJANGO_DEBUG=true uv run python manage.py runserver
+uv run python manage.py runserver
 ```
 
 To use other settings, copy `.env.example` to `.env`, edit it and pass it along with
@@ -174,7 +175,9 @@ GitHub Actions runs linting, type checks and tests against PostgreSQL 16, and bu
 Docker image, on every push and pull request.
 
 Configuration comes from environment variables (see `.env.example`): `DATABASE_URL`,
-`DJANGO_SECRET_KEY`, `DJANGO_DEBUG` and `DJANGO_ALLOWED_HOSTS`.
+`DJANGO_SECRET_KEY`, `DJANGO_DEBUG` and `DJANGO_ALLOWED_HOSTS`. The secret key also signs
+the JWTs, so the app refuses to start without one unless `DJANGO_DEBUG` is on. The test
+suite sets its own.
 
 ## Assumptions
 

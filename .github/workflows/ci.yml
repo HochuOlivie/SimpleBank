@@ -25,6 +25,7 @@ jobs:
           --health-retries 15
     env:
       DATABASE_URL: postgres://simplebank:simplebank@localhost:5432/simplebank
+      DJANGO_SECRET_KEY: django-insecure-ci-only-key-not-for-real-use
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6

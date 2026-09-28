@@ -6,6 +6,7 @@ from pathlib import Path
 
 import dj_database_url
 import django_stubs_ext
+from django.core.exceptions import ImproperlyConfigured
 
 django_stubs_ext.monkeypatch()  # lets generic Django classes be subscripted for type checking
 
@@ -21,8 +22,12 @@ def env_list(name: str, default: str = "") -> list[str]:
 
 
 DEBUG = env_bool("DJANGO_DEBUG")
-# The fallback only suits local development; `manage.py check --deploy` flags it.
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-local-development-only")
+# The key also signs the JWTs, so outside development it must come from the environment.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or (
+    "django-insecure-local-development-only" if DEBUG else ""
+)
+if not SECRET_KEY:
+    raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is off.")
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 
 INSTALLED_APPS = [
