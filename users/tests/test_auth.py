@@ -47,3 +47,12 @@ def test_refresh_token_yields_a_new_access_token(api_client: APIClient, register
 
     assert response.status_code == 200
     assert "access" in response.json()
+
+
+def test_invalid_token_is_rejected_with_an_error_code(api_client: APIClient) -> None:
+    api_client.credentials(HTTP_AUTHORIZATION="Bearer not-a-token")
+
+    response = api_client.get("/api/v1/account/")
+
+    assert response.status_code == 401
+    assert response.json()["code"] == "token_not_valid"

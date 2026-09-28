@@ -38,6 +38,7 @@ def test_account_endpoints_require_authentication(api_client: APIClient, url: st
 
     assert response.status_code == 401
     assert response["WWW-Authenticate"].startswith("Bearer")
+    assert response.json()["code"] == "not_authenticated"
 
 
 def test_new_account_history_holds_the_welcome_bonus(
