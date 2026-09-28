@@ -26,11 +26,11 @@ def register(api_client: APIClient) -> Any:
 
 @pytest.fixture
 def login(api_client: APIClient) -> Any:
-    """Log a registered user in and return the Authorization header for them."""
+    """Log a registered user in; the API client then sends their access token."""
 
-    def _login(email: str, password: str = PASSWORD) -> dict[str, str]:
+    def _login(email: str, password: str = PASSWORD) -> None:
         response = api_client.post("/api/v1/auth/token/", {"email": email, "password": password})
         assert response.status_code == 200, response.content
-        return {"HTTP_AUTHORIZATION": f"Bearer {response.json()['access']}"}
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.json()['access']}")
 
     return _login

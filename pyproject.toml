@@ -47,6 +47,10 @@ exclude = ["/migrations/"]
 module = ["dj_database_url", "django_filters.*", "rest_framework_simplejwt.*"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["banking.filters"]
+disallow_subclassing_any = false  # django-filter ships no type hints
+
 [tool.django-stubs]
 django_settings_module = "config.settings"
 
