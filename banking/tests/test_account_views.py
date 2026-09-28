@@ -1,18 +1,15 @@
-from collections.abc import Callable
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
 
 import pytest
 from rest_framework.test import APIClient
 
 from banking.models import Account, Transaction, TransactionKind, TransactionType
+from tests.helpers import PASSWORD, Login, Register
 from users.models import User
 
 pytestmark = pytest.mark.django_db
 
-Register = Callable[[str], dict[str, Any]]
-Login = Callable[[str], None]
 HISTORY_URL = "/api/v1/account/transactions/"
 
 
@@ -175,7 +172,7 @@ def test_history_rejects_invalid_filters(
 
 @pytest.mark.parametrize("url", ["/api/v1/account/", HISTORY_URL, "/api/v1/transfers/"])
 def test_users_without_an_account_get_404(api_client: APIClient, url: str) -> None:
-    staff = User.objects.create_superuser("admin@example.com", "correct horse battery staple")
+    staff = User.objects.create_superuser("admin@example.com", PASSWORD)
     api_client.force_authenticate(staff)
 
     assert api_client.get(url).status_code == 404

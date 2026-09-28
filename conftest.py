@@ -4,7 +4,7 @@ import pytest
 from pytest_django.fixtures import Settings
 from rest_framework.test import APIClient
 
-PASSWORD = "correct horse battery staple"
+from tests.helpers import PASSWORD, Login, Register
 
 
 @pytest.fixture(autouse=True)
@@ -19,7 +19,7 @@ def api_client() -> APIClient:
 
 
 @pytest.fixture
-def register(api_client: APIClient) -> Any:
+def register(api_client: APIClient) -> Register:
     """Register a user through the API and return the response body."""
 
     def _register(email: str, password: str = PASSWORD) -> dict[str, Any]:
@@ -32,7 +32,7 @@ def register(api_client: APIClient) -> Any:
 
 
 @pytest.fixture
-def login(api_client: APIClient) -> Any:
+def login(api_client: APIClient) -> Login:
     """Log a registered user in; the API client then sends their access token."""
 
     def _login(email: str, password: str = PASSWORD) -> None:

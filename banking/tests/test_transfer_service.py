@@ -13,6 +13,7 @@ from django.db.models import Sum
 from banking.exceptions import InsufficientFundsError
 from banking.models import Account, Transaction, TransactionType, Transfer
 from banking.services import transfer_money
+from tests.helpers import PASSWORD
 from users.services import register_user
 
 
@@ -32,8 +33,8 @@ def _ledger_balance(account: Account) -> Decimal:
 
 @pytest.fixture
 def accounts() -> tuple[Account, Account]:
-    register_user("ada@example.com", "correct horse battery staple")
-    register_user("bob@example.com", "correct horse battery staple")
+    register_user("ada@example.com", PASSWORD)
+    register_user("bob@example.com", PASSWORD)
     return _account("ada@example.com"), _account("bob@example.com")
 
 

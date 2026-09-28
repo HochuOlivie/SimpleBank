@@ -1,7 +1,5 @@
 import re
-from collections.abc import Callable
 from decimal import Decimal
-from typing import Any
 
 import pytest
 from django.db import IntegrityError
@@ -10,13 +8,12 @@ from rest_framework.test import APIClient
 
 from banking.models import Transaction, TransactionKind, TransactionType
 from config import settings as project_settings
-from conftest import PASSWORD
+from tests.helpers import PASSWORD, Register
 from users.models import User
 
 pytestmark = pytest.mark.django_db
 
 URL = "/api/v1/auth/register/"
-Register = Callable[[str], dict[str, Any]]
 
 
 def test_registration_opens_an_account_with_the_welcome_bonus(api_client: APIClient) -> None:

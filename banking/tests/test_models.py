@@ -4,6 +4,7 @@ import pytest
 from django.db import IntegrityError
 
 from banking.models import Account
+from tests.helpers import PASSWORD
 from users.models import User
 
 pytestmark = pytest.mark.django_db
@@ -11,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def account() -> Account:
-    owner = User.objects.create_user("ada@example.com", "correct horse battery staple")
+    owner = User.objects.create_user("ada@example.com", PASSWORD)
     return Account.objects.create(owner=owner, number="1234567890", balance=Decimal("12.34"))
 
 

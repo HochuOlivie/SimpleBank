@@ -1,14 +1,10 @@
-from collections.abc import Callable
-from typing import Any
 
 import pytest
 from rest_framework.test import APIClient
 
-from conftest import PASSWORD
+from tests.helpers import PASSWORD, Register
 
 pytestmark = pytest.mark.django_db
-
-Register = Callable[[str], dict[str, Any]]
 
 
 def test_login_returns_access_and_refresh_tokens(api_client: APIClient, register: Register) -> None:

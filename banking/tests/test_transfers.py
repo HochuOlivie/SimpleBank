@@ -1,16 +1,13 @@
-from collections.abc import Callable
 from decimal import Decimal
-from typing import Any
 
 import pytest
 from rest_framework.test import APIClient
 
 from banking.models import Account, Transaction, Transfer
+from tests.helpers import Login, Register
 
 pytestmark = pytest.mark.django_db
 
-Register = Callable[[str], dict[str, Any]]
-Login = Callable[[str], None]
 URL = "/api/v1/transfers/"
 
 
