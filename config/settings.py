@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "django_filters",
+    "drf_spectacular",
     "users",
     "banking",
 ]
@@ -106,6 +107,7 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "config.exceptions.exception_handler",
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
@@ -114,4 +116,16 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "TOKEN_OBTAIN_SERIALIZER": "users.serializers.EmailTokenObtainPairSerializer",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "SimpleBank API",
+    "DESCRIPTION": (
+        "Register, log in, check your balance and history, and transfer money. "
+        'Amounts are EUR decimal strings with two places, e.g. "10000.00".'
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SCHEMA_PATH_PREFIX": "/api/v1",
+    "COMPONENT_SPLIT_REQUEST": True,
 }

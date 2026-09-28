@@ -52,10 +52,15 @@ class TransactionFilterForm(forms.Form):
 class TransactionFilter(django_filters.FilterSet):
     # "from" is a Python keyword, so it cannot be declared as a plain class attribute.
     locals()["from"] = DateOrDateTimeFilter(
-        field_name="created_at", lookup_expr="gte", help_text="Inclusive lower bound."
+        field_name="created_at",
+        lookup_expr="gte",
+        help_text="Earliest timestamp, inclusive: an ISO 8601 date-time, or a date for 00:00 UTC.",
     )
     to = DateOrDateTimeFilter(
-        field_name="created_at", lookup_expr="lte", end_of_day=True, help_text="Inclusive."
+        field_name="created_at",
+        lookup_expr="lte",
+        end_of_day=True,
+        help_text="Latest timestamp, inclusive: an ISO 8601 date-time, or a date for all of it.",
     )
 
     class Meta:

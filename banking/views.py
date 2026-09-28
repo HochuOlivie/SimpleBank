@@ -1,4 +1,5 @@
 from django.db.models import Q, QuerySet
+from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
 
@@ -34,6 +35,15 @@ class TransactionListView(generics.ListAPIView[Transaction]):
         )
 
 
+@extend_schema_view(
+    post=extend_schema(
+        responses={
+            201: TransferSerializer,
+            400: OpenApiResponse(description="Invalid amount or recipient account."),
+            409: OpenApiResponse(description="Balance does not cover amount plus fee."),
+        }
+    )
+)
 class TransferListCreateView(generics.ListCreateAPIView[Transfer]):
     """Send money to another account (POST), or list transfers you sent or received (GET).
 
