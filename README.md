@@ -175,7 +175,7 @@ GitHub Actions runs linting, type checks and tests against PostgreSQL 16, and bu
 Docker image, on every push and pull request.
 
 Configuration comes from environment variables (see `.env.example`): `DATABASE_URL`,
-`DJANGO_SECRET_KEY`, `DJANGO_DEBUG` and `DJANGO_ALLOWED_HOSTS`. The secret key also signs
+`DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS` and `DJANGO_LOG_LEVEL`. The secret key also signs
 the JWTs, so the app refuses to start without one unless `DJANGO_DEBUG` is on. The test
 suite sets its own.
 
