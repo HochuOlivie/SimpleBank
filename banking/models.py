@@ -62,6 +62,11 @@ class Transfer(models.Model):
     def __str__(self) -> str:
         return f"{self.amount} {self.sender_account} -> {self.recipient_account}"
 
+    @property
+    def total(self) -> Decimal:
+        """What the sender pays: the amount plus the fee."""
+        return self.amount + self.fee
+
 
 class TransactionType(models.TextChoices):
     CREDIT = "credit"
