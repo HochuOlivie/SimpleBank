@@ -59,10 +59,10 @@ class TransferSerializer(serializers.ModelSerializer[Transfer]):
         max_digits=12, decimal_places=2, min_value=Decimal("0.01"), help_text="In EUR."
     )
     fee = serializers.DecimalField(
-        max_digits=12, decimal_places=2, read_only=True, help_text="Paid by the sender."
+        max_digits=18, decimal_places=2, read_only=True, help_text="Paid by the sender."
     )
     total = serializers.DecimalField(
-        max_digits=12, decimal_places=2, read_only=True, help_text="Debited from the sender."
+        max_digits=18, decimal_places=2, read_only=True, help_text="Debited from the sender."
     )
 
     class Meta:

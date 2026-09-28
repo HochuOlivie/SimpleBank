@@ -242,3 +242,14 @@ def test_malformed_idempotency_keys_are_rejected(
     assert response.status_code == 400
     assert "Idempotency-Key" in response.json()
     assert not Transfer.objects.exists()
+
+
+def test_largest_allowed_transfer_is_serialised_with_its_fee(
+    api_client: APIClient, bob_number: str
+) -> None:
+    Account.objects.filter(owner__email="ada@example.com").update(balance=Decimal("2e10"))
+
+    response = api_client.post(URL, {"recipient_account": bob_number, "amount": "9999999999.99"})
+
+    assert response.status_code == 201
+    assert response.json()["total"] == "10249999999.99"
