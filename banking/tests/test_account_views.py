@@ -7,6 +7,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from banking.models import Account, Transaction, TransactionKind, TransactionType
+from users.models import User
 
 pytestmark = pytest.mark.django_db
 
@@ -170,3 +171,11 @@ def test_history_rejects_invalid_filters(
 
     assert response.status_code == 400
     assert field in response.json()
+
+
+@pytest.mark.parametrize("url", ["/api/v1/account/", HISTORY_URL, "/api/v1/transfers/"])
+def test_users_without_an_account_get_404(api_client: APIClient, url: str) -> None:
+    staff = User.objects.create_superuser("admin@example.com", "correct horse battery staple")
+    api_client.force_authenticate(staff)
+
+    assert api_client.get(url).status_code == 404

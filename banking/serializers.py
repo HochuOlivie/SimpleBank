@@ -81,9 +81,8 @@ class TransferSerializer(serializers.ModelSerializer[Transfer]):
         read_only_fields = ("id", "created_at")
 
     def create(self, validated_data: dict[str, Any]) -> Transfer:
-        sender = Account.objects.get(owner_id=self.context["request"].user.pk)
         return transfer_money(
-            sender=sender,
+            sender=validated_data["sender_account"],
             recipient=validated_data["recipient_account"],
             amount=validated_data["amount"],
         )
